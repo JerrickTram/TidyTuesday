@@ -1,0 +1,145 @@
+---
+title: "Tidy Tuesday #37: NYC Restaurant Inspections"
+author: "Jerrick Tram"
+date: " `r Sys.Date()` "
+output: 
+ html_notebook:
+  toc: true
+  toc_float: true
+  theme: united
+---
+# Backstory
+New York is known for its cuisine from the greasiest of pizzas to the finest 
+of eateries. However, restaurants still have a standard to uphold to function 
+in society. Based on a [538 article](https://fivethirtyeight.com/features/how-data-made-me-a-believer-in-new-york-citys-restaurant-grades/),
+NYC restaurants from 2010 to 2014 have shown improvements in terms of health 
+grade. But, we would like to see what type of restaurants typically achieve 
+that high rating. Do restaurants that serve Asian cuisine have a higher 
+probability of receiving an A vs a restaurant that serves American cuisine?
+What restaurants are at risk of receiving a violation?
+
+```{r echo = TRUE, eval = FALSE}
+library(tidyverse)  # For data wrangling and visualization
+library(janitor)    # For data cleaning
+
+set.seed(12345)     # For reproducibility
+
+df <- read_csv("https://data.cityofnewyork.us/api/views/43nn-pn8j/rows.csv")
+
+# Because we only care about the restaurants and their health grade
+# we can throw out irrelevant data
+
+sampled_df <- df %>% 
+  janitor::clean_names() %>% 
+  select(-phone, 
+         -grade_date, 
+         -record_date, 
+         -building, 
+         -street, 
+         -zipcode, 
+         -inspection_date) %>% 
+  sample_n(size = 300000)
+
+# Save as csv
+write_csv(sampled_df, "nyc_restaurants.csv")
+```
+
+# Data Wrangling
+```{r echo = TRUE, eval = TRUE}
+sampled_df %>% 
+  group_by(as.factor(cuisine_description)) %>% 
+  summarize(total = n())
+```
+
+Looking at the type of restaurants, there's quite a bit that overlap so 
+we'd be better off lumping restaurants that share similiar traits. For example, 
+Hotdogs or Bagel cuisine could be collapsed into Carnival cuisine.
+
+```{r echo = TRUE, eval = FALSE}
+sampled_df <- sampled_df %>% 
+  mutate(cuisine_description = fct_collapse(cuisine_description,
+    Southern = c("Cajun", "Creole", "Creole/Cajun", "Southwestern"),
+    Tavern = c("American", 
+               "Barbecue", 
+               "Bottled beverages, including water, sodas, juices, etc.",
+               "Californian",
+               "Chicken", 
+               "Hamburgers",
+               "Pizza",
+               "Sandwiches",
+               "Soul Food",
+               "Soups",
+               "Soups & Sandwiches",
+               "Steak"),
+    Carnival = c("Bagels/Pretzels", 
+                 "Hotdogs",
+                 "Hotdogs/Pretzels",
+                 "Ice Cream, Gelato, Yogurt, Ices",
+                 "Juice, Smoothies, Fruit Salads",
+                 "Nuts/Confectionary"),
+    Continental = c("Café/Coffee/Tea", 
+                    "Continental",
+                    "Delicatessen", 
+                    "Donuts", 
+                    "Fruits/Vegetables",    
+                    "Pancakes/Waffles",
+                    "Salads",
+                    "Sandwiches/Salads/Mixed Buffet",
+                    "Vegetarian"),
+    Eastern_Asia = c("Chinese", 
+                     "Chinese/Cuban", 
+                     "Chinese/Japanese", 
+                     "Japanese", 
+                     "Korean", 
+                     "Asian"),
+    Eastern_European = c("Armenian", "Czech", "Eastern European", "Russian"),
+    Mediterranean = c("Greek", 
+                      "Mediterranean", 
+                      "Moroccan", 
+                      "Italian", 
+                      "Pizza/Italian"),
+    Middle_East = c("Egyptian", "Iranian", "Middle Eastern", "Turkish"),
+    Other = c("Not Listed/Not Applicable", "Other"),
+    African = c("African", "Ethiopian"),
+    Latin = c("Latin (Cuban, Dominican, Puerto Rican, South & Central American)",
+              "Mexican", 
+              "Tex-Mex"),
+    Polynesian = c("Polynesian", "Hawaiian",  "Seafood", "Indonesian", "Filipino"),
+    South_American = c("Brazilian", "Chilean", "Peruvian"),
+    South_Asia = c("Afghan", "Bangladeshi", "Indian", "Pakistani"),
+    Southeastern_Asia = c("Thai", "Vietnamese/Cambodian/Malaysia"),
+    Spanish = c("Basque", "Spanish", "Tapas"),
+    UK = c("English", "Irish"),
+    Western_Europe = c("German", 
+                       "French", 
+                       "Portuguese", 
+                       "Polish", 
+                       "Scandinavian")
+          )
+      )
+```
+
+Not the greatest of classifications but it should suffice. Now it's time to
+plot.
+
+# Data Visualization
+
+```{r echo = TRUE, eval = TRUE}
+sampled_df %>% 
+  mutate(grade = fct_collapse(grade, N = "Not Yet Graded")) %>% 
+  ggplot(aes(grade, fill = critical_flag)) +
+  geom_bar(position = "fill") +
+  facet_wrap(~ cuisine_description) +
+    labs(x = "Grade",
+         y = "Percentage",
+         title = "NYC Restaurant Inspections: 2010 to 2014",
+         fill = "Status")
+```
+
+Across the board, restaurants generally improve their status after being
+revaluated again. Australian cuisine in particular, is interesting as
+the majority of their restaurants still achieve Critical status despite
+reevaluation. Southern restaurants that received a grade of a "B" or "C"
+are at high risk of receiving health violations although serving comfort food
+doesn't have much of an entry barrier vs other styles of food. Feel free to 
+look among the different type of cuisine for other surprising observations.
