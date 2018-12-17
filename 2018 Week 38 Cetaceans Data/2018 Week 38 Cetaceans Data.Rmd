@@ -1,0 +1,106 @@
+---
+title: "Week 38 TidyTuesday: Cetaceans Data"
+author: "Jerrick Tram"
+date: "`r Sys.Date()`"
+output: 
+ html_notebook:
+  toc: true
+  toc_float: true
+  theme: united
+---
+# Backstory
+When I was a young kid, the first thing that comes up to my head thinking about
+marine animals is Shamu, SeaWorld's most popular killer whale(s). You may have 
+also heard of the movie *Free Willy* in the 90s going from a friendly picture
+to the not so friendly parts of animal captivity. One thing I'd like to look 
+at is the lifespan of marine mammals before and after 1972 due to The Marine 
+Mammal Protection Act (MMPA) which regulated the location, time, and reasoning 
+for capturing cetaceans.
+
+
+# Cleaning
+```{r echo = TRUE, eval = FALSE}
+library(tidyverse)  # Data wrangling
+library(lubridate)  # Datetime conversions
+
+Cetaceans <- read_csv("allcetaceans.csv")
+ 
+lapply(Cetaceans, class)   # Look for columns that need to be converted
+
+Cetaceans <- Cetaceans %>% 
+  select(-id, -notes, -transfer, -transfers, -transferDate, -name, -mother, -father) %>% 
+  mutate_at(vars(originDate, entryDate, statusDate), as.Date, format = "%m/%d/%Y") 
+  
+Cetaceans$birthYear <- year(as.Date(Cetaceans$birthYear, format = "%Y"))
+
+
+lapply(Cetaceans, class)   # Recheck columns
+```
+
+# Wrangling
+
+```{r echo = TRUE, eval = TRUE}
+Cetaceans <- Cetaceans %>% 
+  mutate(lifespan = year(statusDate) - year(originDate)) %>% 
+  mutate(mmpa = if_else(year(originDate) >= 1972, "Yes", "No"))
+  
+
+Cetaceans %>% 
+  group_by(species, mmpa) %>% 
+  count(mmpa, sort = TRUE) 
+```
+  
+Roughly 10.4\% of bottlenose dolphins were acquired before the MMPA went into
+effect. Since we talked about killer whales previously, they weren't so lucky
+as 30.4\% of killer whales were acquired prior to the MMPA. So how does the
+MMPA affect the lifespan of cetaceans?
+
+```{r echo = TRUE, eval = TRUE}
+Cetaceans %>% 
+  group_by(species, acquisition, mmpa) %>% 
+  summarize(avg_lifespan = mean(lifespan, na.rm = TRUE))
+```
+
+Something funky is going on as bottlenose dolphins have much shorter lifespans 
+on average **AFTER** the MMPA went into effect. We need to investigate how 
+they died whether it was through natural causes or outside environmental
+factors.
+
+```{r echo = TRUE, eval = TRUE}
+Cetaceans %>% 
+  filter(species == "Bottlenose") %>% 
+  count(COD, sort = TRUE) 
+```
+
+Unfortunately, over a third of the bottlenose dolphins' cause of death (COD) is
+unknown although some of the COD appears to be weather/suffering based. Does
+location play a role?
+
+```{r echo = TRUE, eval = TRUE}
+Cetaceans %>% 
+  filter(species == "Bottlenose") %>%
+  group_by(mmpa) %>% 
+  count(currently, acquisition, sort = TRUE)
+```
+
+Bottlenose dolphins are warm blooded creatures so ideally, they prefer cold
+regions as with the majority of the locations based in Florida, Texas, and 
+California, it's no wonder they didn't last long as those states can get
+really hot.
+
+# Visualization
+```{r echo = TRUE, eval = TRUE}
+Cetaceans %>% 
+  select(species, acquisition, lifespan, mmpa, status) %>% 
+  filter(species == "Bottlenose") %>% 
+  group_by(acquisition, mmpa, status) %>% 
+  summarize(mean_lifespan = mean(lifespan, na.rm = TRUE)) %>% 
+  ggplot(aes(reorder(acquisition, mean_lifespan), mean_lifespan, fill = mmpa)) +
+    geom_col(position = "dodge") +
+    facet_wrap(~ status) +
+    coord_flip() +
+    labs(x = "Acquisition",
+         y = "Average Lifespan",
+         fill = "MMPA",
+         title = "The Lifespan of Bottleneck Dolphins Before/After The MMPA")
+```
