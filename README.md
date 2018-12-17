@@ -8,3 +8,4 @@ fun with data visualizations and other libraries I've yet to use. Future folders
 include R Notebooks and the dataset itself (if it's not that big).
 
 * [2018 Week 37](https://github.com/JerrickTram/TidyTuesday/tree/master/2018%20Week%2037%20NYC%20Restaurant%20Inspections)
+* [2018 Week 38](https://github.com/JerrickTram/TidyTuesday/tree/master/2018%20Week%2038%20Cetaceans%20Data)
