@@ -1,0 +1,105 @@
+---
+title: "Week 29 TidyTuesday: College Major and Income"
+author: "Jerrick Tram"
+date: "`r Sys.Date()`"
+output: 
+ html_notebook:
+  toc: true
+  toc_float: true
+  theme: cerulean
+---
+Picking a major isn't easy for most students when considering job prospects,
+income, work environment, etc. Let's not forget the cost of higher education
+as those who unfortunately don't have scholarships or other funding sources
+borrow approximately 5 to 6 figure loans to cover college expenses. As an
+Economics major, I've been fortunate to live in Georgia as well as attending
+an extremely affordable 4-year college with access to high quality professors.
+Enough about me though, let's get to some exploring.
+
+# Cleaning
+
+```{r echo = TRUE, eval = TRUE}
+library(tidyverse)
+
+df <- read_csv("college.csv")
+df <- df %>% 
+  select(-Major_code, -Rank)   # Remove unnecessary columns
+df
+```
+
+From an old [538 article](https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/)
+discussing the lucrativeness of certain college majors, STEM (dominated by 
+Engineering) majors appear frequently as the top money makers. However, 
+does money affect how many people choose said major?
+
+# EDA
+
+```{r echo = FALSE, eval = TRUE}
+df %>% 
+  group_by(Category) %>% 
+  summarize(total = sum(Total, na.rm = TRUE),
+            median_salary = median(Median)) %>% 
+  arrange(desc(total)) 
+```
+
+An overwhelming number of students picked business yet the rest of the top
+5/10 majors falls under the Humanities and Liberal Arts. The data was collected
+in 2010-2010 although it's interesting to see that money isn't the sole
+motivator towards picking a major. However, when reality kicks in, we also need
+to look at employability and the one thing college students fear most isn't
+frictional unemployment but **underemployment.**
+
+```{r echo = TRUE, eval = TRUE}
+ue <- df %>% 
+  group_by(Major, ShareWomen, Category) %>% 
+  filter(!is.na(ShareWomen)) %>% 
+  summarize(total = sum(Employed, na.rm = TRUE),
+            underemployed = sum(Low_wage_jobs, na.rm = TRUE),
+            underemployed_percentage = underemployed/total) %>% 
+  arrange(desc(underemployed_percentage)) 
+```
+
+Turns out the stereotypes of arts struggling in the job market aren't exactly
+false. A whopping 36.5\% of students that majored in Cosmetology Services and
+Culinary Arts are underemployed. Economics isn't doing too bad for itself at 
+10.2\%. As you go further down the list, you start to see majors that are more
+specialized with unique niches (or STEM) but less representation from women. 
+Do we have fewer than 50\% of women in STEM?
+
+```{r echo = TRUE, eval = TRUE}
+df %>% 
+  group_by(Category) %>% 
+  summarize(women_representation = median(ShareWomen, na.rm = TRUE))
+```
+
+The sciences are where there's decent representation of women but as for
+engineering, computers and mathematics, it just shows 26.9\% and 22.7\%
+respectively. Now let's make some data visualizations
+
+# Visualization
+
+```{r echo = TRUE, eval = TRUE}
+library(ggthemes)
+
+df %>% 
+  ggplot(aes(fct_reorder(Category, Median), Median, na.rm = TRUE)) +
+  geom_boxplot() +
+  coord_flip() +
+  labs(x = "Discipline",
+       y = "Median Salary",
+       title = "2010 - 2012 Median Salaries by Discipline") +
+  theme_economist()
+```
+
+```{r echo = TRUE, eval = TRUE}
+ue %>% 
+  ggplot(aes(underemployed_percentage, ShareWomen, size = underemployed)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_wrap(~ Category) +
+  labs(x = "Underemployment Percentage",
+       y = "Percentage of Women",
+       size = "Total Underemployed",
+       title = "Underemployment by Discipline") +
+  theme_economist()
+```
