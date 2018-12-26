@@ -44,7 +44,7 @@ df %>%
 
 An overwhelming number of students picked business yet the rest of the top
 5/10 majors falls under the Humanities and Liberal Arts. The data was collected
-in 2010-2010 although it's interesting to see that money isn't the sole
+in 2010-2012 although it's interesting to see that money isn't the sole
 motivator towards picking a major. However, when reality kicks in, we also need
 to look at employability and the one thing college students fear most isn't
 frictional unemployment but **underemployment.**
