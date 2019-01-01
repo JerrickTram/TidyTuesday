@@ -1,0 +1,44 @@
+---
+title: "2019 Week 1 TidyTuesday: Rstats Tweets"
+author: "Jerrick Tram"
+date: "`r Sys.Date()`"
+output: 
+ html_notebook:
+  toc: true
+  toc_float: true
+  theme: cerulean
+---
+```{r echo = TRUE, eval = FALSE}
+# Load libraries
+
+library(ggthemes)
+library(rtweet)
+library(tidyverse)
+```
+
+```{r echo = TRUE, eval = FALSE}
+# Search tweets that contain blogdown in the us
+tmls <- get_timelines(c("Rbloggers", "DataCamp", "r4dscommunity"), n = 3000)
+
+tmls %>%
+	filter(created_at > "2018-11-01",
+		 grepl("#rstats", text)) %>%
+	group_by(screen_name) %>%
+	ts_plot("days", trim = 1L) +
+	geom_point() +
+	theme_economist() +
+	theme(
+	 legend.title = element_blank(),
+	 legend.position = "bottom",
+	 plot.title = element_text(face = "bold")) +
+	labs(
+	 x = NULL, y = NULL,
+	 title = "Twitter Status Frequency of Accounts known for R containing #rstats",
+	 subtitle = "Tweet counts collected by day since November 2018",
+	 caption = "\nSource: Data collected from Twitter's REST API via rtweet"
+	)
+```
+
+
+
+
