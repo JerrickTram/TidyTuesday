@@ -17,12 +17,13 @@ library(tidyverse)
 ```
 
 ```{r echo = TRUE, eval = FALSE}
-# Search tweets that contain blogdown in the us
+# Search tweets of R Accounts
 tmls <- get_timelines(c("Rbloggers", "DataCamp", "r4dscommunity"), n = 3000)
+
 
 tmls %>%
 	filter(created_at > "2018-11-01",
-		 grepl("#rstats", text)) %>%
+		 grepl("#rstats", text)) %>%	# Search text that contains #rstats
 	group_by(screen_name) %>%
 	ts_plot("days", trim = 1L) +
 	geom_point() +
@@ -38,7 +39,3 @@ tmls %>%
 	 caption = "\nSource: Data collected from Twitter's REST API via rtweet"
 	)
 ```
-
-
-
-
