@@ -1,0 +1,97 @@
+---
+title: "R Notebook"
+author: "Jerrick Tram"
+date: "`r Sys.Date()`"
+output: 
+ html_notebook
+---
+Despite being more of a Disney/Pixar person myself, I did enjoy my fair share
+of TV shows such as the Office, Game of Thrones, and Spongebob. Like most TV
+shows where we had seasons we enjoyed, there were also seasons that just fell
+flat. Are certain genres just not meant to have high ratings? Did the public
+lose interest in shows that last too long? 
+
+```{r message = FALSE}
+library(ggthemes)   # Using the Economist theme
+library(lubridate)  # Date-time manipulation
+library(tidyverse)  # Data wrangling
+```
+
+```{r message = FALSE}
+df <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-01-08/IMDb_Economist_tv_ratings.csv")
+head(df)
+df$date <- as.Date(df$date)     # Convert to date
+df <- df %>% 
+  select(-titleId)              # Remove unnecessary column
+```
+
+Notice that shows have multiple genres. However, we'd like to know what
+combination of genres tend to be popular.
+
+```{r echo = TRUE, eval = TRUE}
+df %>% 
+  group_by(genres) %>% 
+  summarize(n = n(),
+            med_rating = median(av_rating),
+            med_seasons = median((seasonNumber))) %>% 
+  arrange(desc(n))
+```
+
+The people have spoken and it appears that shows that have "action-packed" or
+"tense" themes are viewed the most. With solid ratings, the "lifespan" of these
+shows are surprisingly short. Let's look at individual shows.
+
+```{r echo = TRUE, eval = TRUE}
+df2 <- df %>% 
+  group_by(title, genres) %>% 
+  summarize(seasons = max(seasonNumber),
+            med_rating = median(av_rating),
+            duration = as.numeric(max(date) - min(date))/365) %>% 
+  arrange(desc(seasons))
+```
+
+44 seasons? Now that's quite an accomplishment. However, the median ratings 
+are more volatile especially ABC Afterschool Specials being our outlier. 
+Do more seasons contribute to the public giving lower ratings?
+
+```{r echo = TRUE, eval = TRUE}
+ggplot(df2, aes(seasons, med_rating, alpha = duration)) +
+  geom_point(position = "jitter") +
+  geom_smooth(method = "lm", se = FALSE) + 
+  labs(x = "Seasons",
+       y = "Median Rating",
+       title = "Drama TV Show Ratings",
+       alpha = "Duration") +
+  theme_economist()
+```
+
+This doesn't tell us much. In fact, if we were going to run a regression...
+
+```{r echo = TRUE, eval = TRUE}
+tv_regression <- lm(med_rating ~ seasons, data = df2)
+summary(tv_regression)
+```
+
+The number of seasons doesn't play a significant role in how the median ratings
+turn out (with the exception of Spongebob as the quality clearly declined after
+Season 3). So let's look exclusively at the top 15 shows if they stood the test
+of time.
+
+```{r message = FALSE}
+top_15 <- df %>% 
+  count(title, sort = TRUE) %>% 
+  top_n(15)
+
+top_15_stats <- inner_join(top_15, df, by = "title")
+
+ggplot(top_15_stats, aes(date, av_rating, col = seasonNumber)) +
+  geom_line(linetype = "solid") +
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) + 
+  facet_wrap(~ title) +
+  labs(x = "Date",
+       y = "Average Rating",
+       col = "Season Number",
+       title = "The Top 15 Most Popular Drama TV Shows and Ratings Over Time") +
+  theme_economist()
+```
