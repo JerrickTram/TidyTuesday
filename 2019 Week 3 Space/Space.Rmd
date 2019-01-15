@@ -1,0 +1,71 @@
+---
+title: "2019 Week 3: Space"
+author: "Jerrick Tram"
+date: "`r Sys.Date()`"
+output: html_notebook
+---
+
+```{r message = FALSE, results = FALSE}
+library(tidyverse)
+library(lubridate)
+library(ggthemes)
+
+df <- read.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-01-15/launches.csv")
+
+df$launch_date <- as.Date(df$launch_date)
+df$launch_year <- year(as.Date(paste(df$launch_year, 1, 1, sep = "-")))
+```
+
+What happened to the number of US launches following space disasters?
+
+```{r}
+challenger <- year(mdy(01281986))     # Date of Challenge Accident
+columbia <- year(mdy(02012003))       # Date of Columbia Accident
+
+df %>% 
+  filter(agency == "US") %>% 
+  group_by(category) %>% 
+  count(launch_year, sort = TRUE) %>% 
+  ggplot(aes(launch_year, n, col = category)) + 
+  geom_line() +
+  geom_point() +
+  geom_vline(aes(xintercept = challenger)) +
+  geom_text(aes(x = 1985, y = 60, label = "Challenger", angle = 90)) +
+  geom_text(aes(x = 2002, y = 60, label = "Columbia", angle = 90)) +
+  geom_vline(aes(xintercept = columbia)) +
+  labs(x = "Year",
+       y = "Number of Launches",
+       col = "Category",
+       title = "Successful vs Nonsuccessful Launches in the US",
+       subtitle = "Data Source: The Economist Github ") +
+theme_economist()
+```
+
+Do agencies have a better success rate from private or state providers?
+
+```{r}
+df2 <- df %>% 
+  filter(!is.na(agency)) %>% 
+  group_by(agency, agency_type) %>% 
+  mutate(Success = if_else(category == "O", 1, 0)) %>% 
+  summarize(Success_rate = sum(Success)/n(),
+            n = n()) %>% 
+  arrange(desc(n))
+
+df2
+```
+
+```{r}
+df2 %>% 
+  filter(n >= 50) %>% 
+  ggplot(aes(fct_reorder(agency, Success_rate), Success_rate, fill = n)) +
+  geom_col() +
+  facet_wrap(~ agency_type) + 
+  coord_flip() + 
+  labs(x = "Agency (min. 50 launches)",
+       y = "Success Rate",
+       title = "Private vs State Provider Success Rate",
+       subtitle = "Data Source: The Economist Github",
+       fill = "Number of Launches") +
+  theme_foundation()
+```
