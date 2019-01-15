@@ -68,3 +68,12 @@ df2 %>%
        fill = "Number of Launches") +
   theme_foundation()
 ```
+
+```{r}
+# Apply Logistic Regression to find success rate by year and agency type
+space_log <- glm(category ~ launch_year + agency_type, 
+                 family = binomial(link = "logit"), 
+                 data = df)
+
+summary(space_log)
+```
