@@ -57,12 +57,11 @@ df2
 
 ```{r}
 df2 %>% 
-  filter(n >= 50) %>% 
   ggplot(aes(fct_reorder(agency, Success_rate), Success_rate, fill = n)) +
   geom_col() +
   facet_wrap(~ agency_type) + 
   coord_flip() + 
-  labs(x = "Agency (min. 50 launches)",
+  labs(x = "Agency",
        y = "Success Rate",
        title = "Private vs State Provider Success Rate",
        subtitle = "Data Source: The Economist Github",
