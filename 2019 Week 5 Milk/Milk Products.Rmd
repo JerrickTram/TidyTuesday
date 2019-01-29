@@ -1,0 +1,54 @@
+---
+title: "R Notebook"
+author: "Jerrick Tram"
+date: "`r Sys.Date()`"
+output: html_notebook
+---
+
+```{r message = FALSE, result = FALSE}
+library(gganimate)
+library(ggthemes)
+library(janitor)
+library(lubridate)
+library(tidyverse)
+
+df <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-01-29/fluid_milk_sales.csv")
+
+df$year <- as.Date(as.character(df$year), "%Y")
+df$year <- year(df$year)
+```
+
+What is the market share of milk products over time?
+
+```{r}
+df %>% 
+  spread(milk_type, pounds) %>% 
+  clean_names() %>% 
+  group_by(year) %>% 
+  transmute(Buttermilk = buttermilk/total_production,
+            Eggnog = eggnog/total_production,
+            Flavored_not_whole = flavored_not_whole/total_production,
+            Flavored_whole = flavored_whole/total_production,
+            Low_fat_1_percent = low_fat_1_percent/total_production,
+            Reduced_fat_2_percent = reduced_fat_2_percent/total_production,
+            Skim = skim/total_production,
+            Whole = whole/total_production) %>% 
+  gather(milk_type,
+         market_share,
+         "Buttermilk", 
+         "Eggnog", 
+         "Flavored_not_whole", 
+         "Flavored_whole", 
+         "Low_fat_1_percent",
+         "Reduced_fat_2_percent",
+         "Skim",
+         "Whole") %>% 
+ggplot(aes(fct_reorder(milk_type, market_share), market_share, fill = market_share)) +
+  geom_col() + 
+  coord_flip() + 
+  labs(title = "Market Share of Milk Products in Year {frame_time}", 
+       x = "Milk Type", 
+       y = "Market Share",
+       fill = "Market Share") +
+  transition_time(year)
+```
