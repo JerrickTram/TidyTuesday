@@ -29,5 +29,5 @@ rd %>%
   labs(x = "Budget Rank",
        y = "Frequency",
        fill = "Department",
-       title = "The Big Budgets of Government Agencies in R&D in {frame_time}") +
+       title = "The Big Budgets of Government Agencies in R&D in {round(frame_time)}") +
   transition_time(year)
