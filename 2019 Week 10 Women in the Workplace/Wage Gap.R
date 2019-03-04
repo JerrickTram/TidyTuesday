@@ -3,7 +3,7 @@ library(tidyverse)
 
 df <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-03-05/jobs_gender.csv")
 
-# Is the female wage gap more prominent in different class of work
+# Is the female wage gap more prominent in higher class of work?
 df_class <- df %>% 
   filter(minor_category %in% c("Management", 
                              "Office and Administrative Support",
@@ -26,7 +26,7 @@ df_class %>%
          caption = "Source: Census Bureau")
 ggsave("women_wage.png")
 
-# Does higher representation of females reduce the wage differential
+# Does higher representation of females reduce the wage differential?
 model_1 <- lm(female_differential ~ percent_female + 
                                     majority_female + 
                                     minor_category + 
