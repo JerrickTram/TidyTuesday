@@ -1,4 +1,3 @@
-library(leaflet)
 library(maps)
 library(tidyverse)
 library(zipcode)
