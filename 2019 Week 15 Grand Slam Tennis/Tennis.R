@@ -32,7 +32,7 @@ df_total <- df_raw %>%
            outcome == "Won" ~ 7)
          )
 
-# Top 10 Tennis Athletes with the most Grand Slam Titles
+# Top 5 Tennis Athletes with the most Grand Slam Titles
 top_5 <- df_total %>% 
   group_by(player) %>% 
   summarize(total_wins = sum(winner, na.rm = TRUE)) %>% 
