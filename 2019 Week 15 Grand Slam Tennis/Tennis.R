@@ -50,7 +50,7 @@ df_total %>%
          y = "Matches Won",
          title = "Total Matches Won by the Top 5 \nTennis Athletes in Grand Slam Titles",
          subtitle = "Dashed Line Indicates Winning Grand Slam Title",
-         caption = "Data Source: ") +
+         caption = "Data Source: Wikipedia") +
     geom_hline(aes(yintercept = 7), linetype = "dashed") 
 
 ggsave("Tennis.png", width = 30, height = 20, units = "cm")
